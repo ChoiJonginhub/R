@@ -1,5 +1,13 @@
 bf<-read.csv("blackfri.csv")
 library(dplyr)
+#인기상품 5개
+bestpro<-bf %>%
+  group_by(bf$Product_ID) %>%
+  count(bf$Product_ID) %>%
+  arrange(desc(n)) %>%
+  head(5)
+bestpro
+#인기순으로 P00265242, P00025442, P00110742, P00112142, P00057642
 #고객별 중복주문 제거
 bf2<-distinct(bf, bf$User_ID, .keep_all = TRUE)
 bf2
@@ -43,4 +51,11 @@ customers_products<-bf %>%
   spread(User_ID, Product_ID) %>%
   t()
 write.csv(customers_products, file = 'customers_products.csv')
-customersProducts<-read.transactions('customers_products.csv')
+customersProducts<-read.transactions('customers_products.csv', sep=',', rm.duplicates = TRUE)
+
+cp<-apriori(customersProducts, parameter = list(support=0.1, confidence=0.2, minlen=2))
+cp
+#22 rules
+cp_head<-head(inspect(sort(cp, by="lift")), 10)
+cp_head
+ggplot(cp_head, aes(x=support, y=confidence))+geom_col()
